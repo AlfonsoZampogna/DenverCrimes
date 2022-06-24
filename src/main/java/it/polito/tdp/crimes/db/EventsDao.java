@@ -53,5 +53,91 @@ public class EventsDao {
 			return null ;
 		}
 	}
+	
+	public List<String> getAllCategorie(){
+		String sql = "SELECT DISTINCT offense_category_id "
+				+ "FROM events";
+		List<String> categorieDAO = new ArrayList<String>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
 
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				categorieDAO.add(res.getString("offense_category_id"));
+			}
+			
+			conn.close();
+			return categorieDAO ;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+	}
+	
+	public List<String> getTipiReato(String categoria, int mese){
+		String sql = "SELECT DISTINCT offense_type_id "
+				+ "FROM EVENTS "
+				+ "WHERE EVENTS.offense_category_id=? AND MONTH(EVENTS.reported_date)=?";
+		List<String> tipiDAO = new ArrayList<String>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
+
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			
+			st.setString(1, categoria);
+			st.setInt(2, mese);
+			
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				tipiDAO.add(res.getString("offense_type_id"));
+			}
+			
+			conn.close();
+			return tipiDAO ;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+	}
+
+	public List<Adiacenza> getArchi(String categoria, int mese){
+		String sql = "SELECT e1.offense_type_id AS tipoReato1, e2.offense_type_id AS tipoReato2, COUNT( distinct e1.neighborhood_id) AS peso "
+				+ "FROM EVENTS e1, EVENTS e2 "
+				+ "WHERE e1.offense_category_id=? AND e1.offense_category_id=e2.offense_category_id "
+				+ " AND MONTH(e1.reported_date)=? AND MONTH(e1.reported_date)=MONTH(e2.reported_date) "
+				+ " AND e1.offense_type_id>e2.offense_type_id AND e1.neighborhood_id=e2.neighborhood_id "
+				+ "GROUP BY e1.offense_type_id, e2.offense_type_id";
+		List<Adiacenza> result = new ArrayList<Adiacenza>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
+
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			
+			st.setString(1, categoria);
+			st.setInt(2, mese);
+			
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				result.add(new Adiacenza(res.getString("tipoReato1"), res.getString("tipoReato2"),res.getInt("peso")));
+			}
+			
+			conn.close();
+			return result;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+	
+	}
 }
